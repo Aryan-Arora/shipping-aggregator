@@ -1,0 +1,210 @@
+@import "tailwindcss";
+
+/* ---------------------------------------------------------------------- */
+/* Design tokens — edit these to reskin the whole app in one place.       */
+/* ---------------------------------------------------------------------- */
+:root {
+  color-scheme: light;
+
+  /* Brand / accent — swap these when the palette is decided */
+  --color-accent: #2563eb;
+  --color-accent-hover: #1d4ed8;
+  --color-accent-soft: #eff4ff;
+
+  /* Semantic status colors (kept independent of brand accent) */
+  --color-success: #1a9147;
+  --color-success-soft: #eafaf0;
+  --color-warning: #b8860b;
+  --color-warning-soft: #fff8e6;
+  --color-danger: #d1372f;
+  --color-danger-soft: #fdedec;
+
+  /* Neutrals */
+  --color-bg: #f5f6f8;
+  --color-surface: #ffffff;
+  --color-surface-raised: #ffffff;
+  --color-border: #e5e7eb;
+  --color-border-strong: #d7dade;
+  --color-text-primary: #16181d;
+  --color-text-secondary: #6b7280;
+  --color-text-tertiary: #9aa0ab;
+
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+
+  --shadow-sm: 0 1px 2px rgba(16, 20, 30, 0.04);
+  --shadow-md: 0 4px 16px rgba(16, 20, 30, 0.08);
+  --shadow-lg: 0 12px 32px rgba(16, 20, 30, 0.12);
+}
+
+@theme inline {
+  --color-background: var(--color-bg);
+  --color-foreground: var(--color-text-primary);
+
+  --color-accent: var(--color-accent);
+  --color-accent-hover: var(--color-accent-hover);
+  --color-accent-soft: var(--color-accent-soft);
+
+  --color-success: var(--color-success);
+  --color-success-soft: var(--color-success-soft);
+  --color-warning: var(--color-warning);
+  --color-warning-soft: var(--color-warning-soft);
+  --color-danger: var(--color-danger);
+  --color-danger-soft: var(--color-danger-soft);
+
+  --color-surface: var(--color-surface);
+  --color-border: var(--color-border);
+  --color-text-primary: var(--color-text-primary);
+  --color-text-secondary: var(--color-text-secondary);
+  --color-text-tertiary: var(--color-text-tertiary);
+
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+* {
+  border-color: var(--color-border);
+}
+
+body {
+  background: var(--color-bg);
+  color: var(--color-text-primary);
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", var(--font-sans), "Segoe UI",
+    Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3 {
+  letter-spacing: -0.015em;
+}
+
+/* ---------------------------------------------------------------------- */
+/* Form controls — explicit colors so native dark-mode form styling never */
+/* renders invisible (white-on-white) text again.                        */
+/* ---------------------------------------------------------------------- */
+input,
+textarea,
+select {
+  background-color: var(--color-surface);
+  color: var(--color-text-primary);
+  accent-color: var(--color-accent);
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: var(--color-text-tertiary);
+}
+
+@layer components {
+  .field {
+    @apply w-full rounded-[var(--radius-sm)] border px-3 py-2 text-[0.9rem] outline-none transition-all duration-150;
+    background-color: var(--color-surface);
+    color: var(--color-text-primary);
+    border-color: var(--color-border-strong);
+  }
+  .field:focus {
+    border-color: var(--color-accent);
+    box-shadow: 0 0 0 3.5px var(--color-accent-soft);
+  }
+  .field::placeholder {
+    color: var(--color-text-tertiary);
+  }
+
+  .label {
+    @apply mb-1.5 block text-[0.8rem] font-medium;
+    color: var(--color-text-secondary);
+  }
+
+  .card {
+    @apply rounded-[var(--radius-lg)] border;
+    background-color: var(--color-surface);
+    border-color: var(--color-border);
+    box-shadow: var(--shadow-sm);
+  }
+
+  .btn-primary,
+  .btn-secondary,
+  .btn-ghost {
+    @apply inline-flex items-center justify-center gap-1.5 rounded-[var(--radius-sm)] px-3.5 py-2 text-[0.875rem] font-medium transition-all duration-150 active:scale-[0.97] disabled:cursor-not-allowed disabled:opacity-50 disabled:active:scale-100;
+  }
+  .btn-primary {
+    color: #fff;
+    background-color: var(--color-accent);
+    box-shadow: var(--shadow-sm);
+  }
+  .btn-primary:hover:not(:disabled) {
+    background-color: var(--color-accent-hover);
+  }
+  .btn-secondary {
+    @apply border;
+    background-color: var(--color-surface);
+    color: var(--color-text-primary);
+    border-color: var(--color-border-strong);
+  }
+  .btn-secondary:hover:not(:disabled) {
+    background-color: var(--color-bg);
+  }
+  .btn-ghost {
+    color: var(--color-text-secondary);
+  }
+  .btn-ghost:hover:not(:disabled) {
+    background-color: var(--color-bg);
+    color: var(--color-text-primary);
+  }
+
+  .table-shell {
+    @apply overflow-hidden rounded-[var(--radius-lg)] border;
+    background-color: var(--color-surface);
+    border-color: var(--color-border);
+    box-shadow: var(--shadow-sm);
+  }
+  .table-shell table {
+    @apply w-full text-[0.875rem];
+  }
+  .table-shell thead {
+    background-color: var(--color-bg);
+  }
+  .table-shell th {
+    @apply px-4 py-2.5 text-left text-[0.7rem] font-semibold uppercase tracking-wide;
+    color: var(--color-text-tertiary);
+  }
+  .table-shell td {
+    @apply px-4 py-2.5;
+    border-top: 1px solid var(--color-border);
+  }
+  .table-shell tbody tr {
+    transition: background-color 120ms ease-out;
+  }
+  .table-shell tbody tr:hover {
+    background-color: var(--color-bg);
+  }
+
+  .badge {
+    @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-[0.72rem] font-medium capitalize tracking-wide;
+  }
+}
+
+/* Fade/slide-in for freshly mounted content — respects reduced motion */
+.animate-in {
+  animation: fade-in 220ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition-duration: 0.001ms !important;
+    animation-duration: 0.001ms !important;
+  }
+}
