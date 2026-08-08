@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { apiGet } from "@/lib/api";
+import { apiGet, apiPost } from "@/lib/api";
 import { StatusBadge } from "@/components/StatusBadge";
 
 interface NdrCase {
@@ -29,13 +29,35 @@ export default function AdminNdrPage() {
   const [cases, setCases] = useState<NdrCase[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [actingId, setActingId] = useState<string | null>(null);
+
+  async function load() {
+    setLoading(true);
+    try {
+      setCases(await apiGet<NdrCase[]>("/admin/ndr"));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to load NDR cases");
+    } finally {
+      setLoading(false);
+    }
+  }
 
   useEffect(() => {
-    apiGet<NdrCase[]>("/admin/ndr")
-      .then(setCases)
-      .catch((err) => setError(err instanceof Error ? err.message : "Failed to load NDR cases"))
-      .finally(() => setLoading(false));
+    load();
   }, []);
+
+  async function handleAction(id: string, action: "reattempt" | "cancel" | "resolve" | "escalate") {
+    setActingId(id);
+    setError(null);
+    try {
+      await apiPost(`/admin/ndr/${id}/${action}`, {});
+      await load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Action failed");
+    } finally {
+      setActingId(null);
+    }
+  }
 
   return (
     <div>
@@ -43,7 +65,7 @@ export default function AdminNdrPage() {
         NDR Oversight
       </h1>
       <p className="mt-1 text-[0.85rem]" style={muted}>
-        Failed delivery cases across every seller.
+        Failed delivery cases across every seller — admins can intervene directly here.
       </p>
 
       {error && (
@@ -63,18 +85,19 @@ export default function AdminNdrPage() {
               <th>Attempts</th>
               <th>Days pending</th>
               <th>Status</th>
+              <th></th>
             </tr>
           </thead>
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan={7} style={muted}>
+                <td colSpan={8} style={muted}>
                   Loading...
                 </td>
               </tr>
             ) : cases.length === 0 ? (
               <tr>
-                <td colSpan={7} style={muted}>
+                <td colSpan={8} style={muted}>
                   No NDR cases platform-wide.
                 </td>
               </tr>
@@ -99,6 +122,40 @@ export default function AdminNdrPage() {
                       <StatusBadge status={c.status} />
                       {c.escalated && <StatusBadge status="failed" />}
                     </div>
+                  </td>
+                  <td className="text-right">
+                    {c.status === "open" || c.status === "reattempt_scheduled" ? (
+                      <div className="flex justify-end gap-3">
+                        <button
+                          disabled={actingId === c.id}
+                          onClick={() => handleAction(c.id, "reattempt")}
+                          className="text-[0.75rem] font-medium hover:underline disabled:opacity-50"
+                          style={{ color: "var(--color-accent)" }}
+                        >
+                          Reattempt
+                        </button>
+                        <button
+                          disabled={actingId === c.id}
+                          onClick={() => handleAction(c.id, "resolve")}
+                          className="text-[0.75rem] font-medium hover:underline disabled:opacity-50"
+                          style={{ color: "var(--color-success)" }}
+                        >
+                          Resolve
+                        </button>
+                        <button
+                          disabled={actingId === c.id}
+                          onClick={() => handleAction(c.id, "cancel")}
+                          className="text-[0.75rem] font-medium hover:underline disabled:opacity-50"
+                          style={{ color: "var(--color-danger)" }}
+                        >
+                          Cancel (RTO)
+                        </button>
+                      </div>
+                    ) : (
+                      <span className="text-[0.75rem]" style={muted}>
+                        —
+                      </span>
+                    )}
                   </td>
                 </tr>
               ))

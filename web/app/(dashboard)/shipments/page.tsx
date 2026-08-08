@@ -4,6 +4,9 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { apiGet } from "@/lib/api";
 import { StatusBadge } from "@/components/StatusBadge";
+import { Pagination } from "@/components/Pagination";
+
+const PAGE_SIZE = 10;
 
 interface Shipment {
   id: string;
@@ -21,6 +24,9 @@ export default function ShipmentsPage() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [fromDate, setFromDate] = useState("");
+  const [toDate, setToDate] = useState("");
+  const [page, setPage] = useState(1);
 
   const muted = { color: "var(--color-text-secondary)" };
   const primary = { color: "var(--color-text-primary)" };
@@ -40,11 +46,21 @@ export default function ShipmentsPage() {
         s.awb?.toLowerCase().includes(search.toLowerCase()) ||
         s.orders?.order_ref?.toLowerCase().includes(search.toLowerCase());
       const matchesStatus = statusFilter === "all" || s.status === statusFilter;
-      return matchesSearch && matchesStatus;
+      const bookedDate = s.booked_at.slice(0, 10);
+      const matchesFrom = !fromDate || bookedDate >= fromDate;
+      const matchesTo = !toDate || bookedDate <= toDate;
+      return matchesSearch && matchesStatus && matchesFrom && matchesTo;
     });
-  }, [shipments, search, statusFilter]);
+  }, [shipments, search, statusFilter, fromDate, toDate]);
 
   const statuses = useMemo(() => Array.from(new Set(shipments.map((s) => s.status))), [shipments]);
+
+  const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const paged = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
+  useEffect(() => {
+    setPage(1);
+  }, [search, statusFilter, fromDate, toDate]);
 
   return (
     <div>
@@ -52,7 +68,7 @@ export default function ShipmentsPage() {
         Shipments
       </h1>
 
-      <div className="mt-5 flex gap-3">
+      <div className="mt-5 flex flex-wrap items-end gap-3">
         <input
           placeholder="Search by AWB or order ref"
           value={search}
@@ -71,6 +87,14 @@ export default function ShipmentsPage() {
             </option>
           ))}
         </select>
+        <div>
+          <label className="label">From</label>
+          <input type="date" value={fromDate} onChange={(e) => setFromDate(e.target.value)} className="field w-auto" />
+        </div>
+        <div>
+          <label className="label">To</label>
+          <input type="date" value={toDate} onChange={(e) => setToDate(e.target.value)} className="field w-auto" />
+        </div>
       </div>
 
       <div className="table-shell mt-4">
@@ -94,11 +118,11 @@ export default function ShipmentsPage() {
             ) : filtered.length === 0 ? (
               <tr>
                 <td colSpan={5} style={muted}>
-                  No shipments yet.
+                  {shipments.length === 0 ? "No shipments yet." : "No shipments match these filters."}
                 </td>
               </tr>
             ) : (
-              filtered.map((s) => (
+              paged.map((s) => (
                 <tr key={s.id}>
                   <td>
                     <Link
@@ -123,6 +147,7 @@ export default function ShipmentsPage() {
           </tbody>
         </table>
       </div>
+      <Pagination page={page} pageCount={pageCount} onPageChange={setPage} />
     </div>
   );
 }

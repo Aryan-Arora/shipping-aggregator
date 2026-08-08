@@ -1,9 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { apiGet, apiPost } from "@/lib/api";
 import { StatusBadge } from "@/components/StatusBadge";
+import { Pagination } from "@/components/Pagination";
+
+const PAGE_SIZE = 10;
 
 interface Order {
   id: string;
@@ -33,6 +36,9 @@ export default function OrdersPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [page, setPage] = useState(1);
 
   const muted = { color: "var(--color-text-secondary)" };
   const primary = { color: "var(--color-text-primary)" };
@@ -71,6 +77,24 @@ export default function OrdersPage() {
       setSubmitting(false);
     }
   }
+
+  const filtered = useMemo(() => {
+    return orders.filter((o) => {
+      const matchesSearch =
+        !search ||
+        o.order_ref.toLowerCase().includes(search.toLowerCase()) ||
+        o.customer_name.toLowerCase().includes(search.toLowerCase());
+      const matchesStatus = statusFilter === "all" || o.status === statusFilter;
+      return matchesSearch && matchesStatus;
+    });
+  }, [orders, search, statusFilter]);
+
+  const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const paged = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
+  useEffect(() => {
+    setPage(1);
+  }, [search, statusFilter]);
 
   return (
     <div>
@@ -153,7 +177,25 @@ export default function OrdersPage() {
         </button>
       </form>
 
-      <div className="table-shell mt-6">
+      <div className="mt-5 flex gap-3">
+        <input
+          placeholder="Search by order ref or customer"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="field w-64"
+        />
+        <select
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value)}
+          className="field w-auto"
+        >
+          <option value="all">All statuses</option>
+          <option value="pending">Pending</option>
+          <option value="shipped">Shipped</option>
+        </select>
+      </div>
+
+      <div className="table-shell mt-4">
         <table>
           <thead>
             <tr>
@@ -173,14 +215,14 @@ export default function OrdersPage() {
                   Loading...
                 </td>
               </tr>
-            ) : orders.length === 0 ? (
+            ) : filtered.length === 0 ? (
               <tr>
                 <td colSpan={7} style={muted}>
-                  No orders yet.
+                  {orders.length === 0 ? "No orders yet." : "No orders match these filters."}
                 </td>
               </tr>
             ) : (
-              orders.map((order) => (
+              paged.map((order) => (
                 <tr key={order.id}>
                   <td className="font-medium" style={primary}>
                     {order.order_ref}
@@ -211,6 +253,7 @@ export default function OrdersPage() {
           </tbody>
         </table>
       </div>
+      <Pagination page={page} pageCount={pageCount} onPageChange={setPage} />
     </div>
   );
 }

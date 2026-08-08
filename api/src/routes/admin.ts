@@ -7,12 +7,19 @@ import {
   listShipmentsAdmin,
   listCouriersWithPerformance,
   updateCourier,
+  getCourierRateCard,
   listNdrCasesAdmin,
   listCodRemittancesAdmin,
   getPlatformStats,
   assertNotSelfDeactivation,
   SelfDeactivationError,
 } from "../services/adminService";
+import {
+  adminReattemptNdrCase,
+  adminCancelNdrCase,
+  adminResolveNdrCase,
+  adminEscalateNdrCase,
+} from "../services/ndrService";
 import { recordRemittance } from "../services/codRemittanceService";
 import { runCodReconciliation } from "../jobs/codReconciliation";
 import { reconcileStaleShipments } from "../jobs/trackingReconciliation";
@@ -84,6 +91,18 @@ adminRouter.patch("/couriers/:id", async (req, res) => {
   }
 });
 
+adminRouter.get("/couriers/:id/rate-card", async (req, res) => {
+  try {
+    const { pincode, weight } = req.query;
+    if (typeof pincode !== "string" || typeof weight !== "string") {
+      return res.status(400).json({ error: "pincode and weight query params are required" });
+    }
+    res.json(await getCourierRateCard(req.params.id, pincode, Number(weight)));
+  } catch (err) {
+    res.status(400).json({ error: err instanceof Error ? err.message : "Rate check failed" });
+  }
+});
+
 adminRouter.get("/ndr", async (_req, res) => {
   try {
     res.json(await listNdrCasesAdmin());
@@ -91,6 +110,23 @@ adminRouter.get("/ndr", async (_req, res) => {
     res.status(500).json({ error: err instanceof Error ? err.message : "Failed to load NDR cases" });
   }
 });
+
+async function handleNdrAction(
+  action: (id: string) => Promise<unknown>,
+  req: Parameters<import("express").RequestHandler>[0],
+  res: Parameters<import("express").RequestHandler>[1]
+) {
+  try {
+    res.json(await action(req.params.id));
+  } catch (err) {
+    res.status(400).json({ error: err instanceof Error ? err.message : "Action failed" });
+  }
+}
+
+adminRouter.post("/ndr/:id/reattempt", (req, res) => handleNdrAction(adminReattemptNdrCase, req, res));
+adminRouter.post("/ndr/:id/cancel", (req, res) => handleNdrAction(adminCancelNdrCase, req, res));
+adminRouter.post("/ndr/:id/resolve", (req, res) => handleNdrAction(adminResolveNdrCase, req, res));
+adminRouter.post("/ndr/:id/escalate", (req, res) => handleNdrAction(adminEscalateNdrCase, req, res));
 
 adminRouter.get("/cod", async (_req, res) => {
   try {

@@ -1,4 +1,5 @@
 import { supabase } from "../config/supabase";
+import { adapterRegistry } from "../adapters";
 
 export class SelfDeactivationError extends Error {
   constructor() {
@@ -130,6 +131,27 @@ export async function listCouriersWithPerformance() {
       ndrRate: total > 0 ? Math.round((ndrCount / total) * 1000) / 10 : null,
     };
   });
+}
+
+// "View rate cards" from the original spec's courier-management item — since
+// pricing is computed dynamically per adapter (no static rate-card table),
+// this runs a live test quote through the courier's actual adapter rather
+// than inventing a separate pricing table to display.
+export async function getCourierRateCard(courierId: string, pincode: string, weightKg: number) {
+  const { data: courier, error } = await supabase
+    .from("couriers")
+    .select("id, name, code")
+    .eq("id", courierId)
+    .single();
+  if (error || !courier) throw new Error("Courier not found");
+
+  const adapter = adapterRegistry[courier.code];
+  if (!adapter) {
+    throw new Error(`No adapter registered for courier code ${courier.code} — nothing to test`);
+  }
+
+  const quote = await adapter.getRates(pincode, weightKg);
+  return { courierName: courier.name, pincode, weightKg, ...quote };
 }
 
 export async function updateCourier(id: string, updates: { is_active?: boolean }) {

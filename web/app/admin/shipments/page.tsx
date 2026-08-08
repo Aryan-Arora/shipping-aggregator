@@ -3,6 +3,9 @@
 import { useEffect, useMemo, useState } from "react";
 import { apiGet } from "@/lib/api";
 import { StatusBadge } from "@/components/StatusBadge";
+import { Pagination } from "@/components/Pagination";
+
+const PAGE_SIZE = 15;
 
 interface Shipment {
   id: string;
@@ -40,6 +43,9 @@ export default function AdminShipmentsPage() {
   const [sellerId, setSellerId] = useState("");
   const [courierId, setCourierId] = useState("");
   const [status, setStatus] = useState("");
+  const [fromDate, setFromDate] = useState("");
+  const [toDate, setToDate] = useState("");
+  const [page, setPage] = useState(1);
 
   useEffect(() => {
     (async () => {
@@ -57,8 +63,10 @@ export default function AdminShipmentsPage() {
     if (sellerId) params.set("sellerId", sellerId);
     if (courierId) params.set("courierId", courierId);
     if (status) params.set("status", status);
+    if (fromDate) params.set("from", fromDate);
+    if (toDate) params.set("to", `${toDate}T23:59:59`);
     return params.toString();
-  }, [sellerId, courierId, status]);
+  }, [sellerId, courierId, status, fromDate, toDate]);
 
   useEffect(() => {
     setLoading(true);
@@ -67,6 +75,13 @@ export default function AdminShipmentsPage() {
       .catch((err) => setError(err instanceof Error ? err.message : "Failed to load shipments"))
       .finally(() => setLoading(false));
   }, [queryString]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [queryString]);
+
+  const pageCount = Math.max(1, Math.ceil(shipments.length / PAGE_SIZE));
+  const paged = shipments.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   return (
     <div>
@@ -77,7 +92,7 @@ export default function AdminShipmentsPage() {
         Every shipment across every seller.
       </p>
 
-      <div className="mt-5 flex flex-wrap gap-3">
+      <div className="mt-5 flex flex-wrap items-end gap-3">
         <select value={sellerId} onChange={(e) => setSellerId(e.target.value)} className="field w-auto">
           <option value="">All sellers</option>
           {sellers.map((s) => (
@@ -103,6 +118,14 @@ export default function AdminShipmentsPage() {
           <option value="ndr">NDR</option>
           <option value="rto">RTO</option>
         </select>
+        <div>
+          <label className="label">From</label>
+          <input type="date" value={fromDate} onChange={(e) => setFromDate(e.target.value)} className="field w-auto" />
+        </div>
+        <div>
+          <label className="label">To</label>
+          <input type="date" value={toDate} onChange={(e) => setToDate(e.target.value)} className="field w-auto" />
+        </div>
       </div>
 
       {error && (
@@ -136,7 +159,7 @@ export default function AdminShipmentsPage() {
                 </td>
               </tr>
             ) : (
-              shipments.map((s) => (
+              paged.map((s) => (
                 <tr key={s.id}>
                   <td>
                     <p className="font-medium" style={primary}>
@@ -160,6 +183,7 @@ export default function AdminShipmentsPage() {
           </tbody>
         </table>
       </div>
+      <Pagination page={page} pageCount={pageCount} onPageChange={setPage} />
     </div>
   );
 }

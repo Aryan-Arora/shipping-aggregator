@@ -1,7 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { apiGet, apiPost, apiPatch, apiDelete } from "@/lib/api";
+import { Pagination } from "@/components/Pagination";
+
+const PAGE_SIZE = 10;
 
 interface PickupLocation {
   id: string;
@@ -30,6 +33,8 @@ export default function PickupLocationsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [search, setSearch] = useState("");
+  const [page, setPage] = useState(1);
 
   async function load() {
     setLoading(true);
@@ -74,6 +79,23 @@ export default function PickupLocationsPage() {
 
   const muted = { color: "var(--color-text-secondary)" };
   const primary = { color: "var(--color-text-primary)" };
+
+  const filtered = useMemo(() => {
+    return locations.filter(
+      (loc) =>
+        !search ||
+        loc.label.toLowerCase().includes(search.toLowerCase()) ||
+        loc.city.toLowerCase().includes(search.toLowerCase()) ||
+        loc.pincode.includes(search)
+    );
+  }, [locations, search]);
+
+  const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const paged = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
+  useEffect(() => {
+    setPage(1);
+  }, [search]);
 
   return (
     <div>
@@ -141,7 +163,16 @@ export default function PickupLocationsPage() {
         </button>
       </form>
 
-      <div className="table-shell mt-6">
+      <div className="mt-5">
+        <input
+          placeholder="Search by label, city, or pincode"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="field w-64"
+        />
+      </div>
+
+      <div className="table-shell mt-4">
         <table>
           <thead>
             <tr>
@@ -159,14 +190,14 @@ export default function PickupLocationsPage() {
                   Loading...
                 </td>
               </tr>
-            ) : locations.length === 0 ? (
+            ) : filtered.length === 0 ? (
               <tr>
                 <td colSpan={5} style={muted}>
-                  No pickup locations yet.
+                  {locations.length === 0 ? "No pickup locations yet." : "No pickup locations match this search."}
                 </td>
               </tr>
             ) : (
-              locations.map((loc) => (
+              paged.map((loc) => (
                 <tr key={loc.id}>
                   <td className="font-medium" style={primary}>
                     {loc.label}
@@ -205,6 +236,7 @@ export default function PickupLocationsPage() {
           </tbody>
         </table>
       </div>
+      <Pagination page={page} pageCount={pageCount} onPageChange={setPage} />
     </div>
   );
 }
