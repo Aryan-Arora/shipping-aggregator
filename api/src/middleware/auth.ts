@@ -35,7 +35,7 @@ export async function requireAuth(req: Request, res: Response, next: NextFunctio
 
   const { data: seller, error: sellerError } = await supabase
     .from("sellers")
-    .select("id, role")
+    .select("id, role, is_active")
     .eq("auth_user_id", data.user.id)
     .single();
 
@@ -43,7 +43,18 @@ export async function requireAuth(req: Request, res: Response, next: NextFunctio
     return res.status(403).json({ error: "No seller record for this user" });
   }
 
+  if (seller.is_active === false) {
+    return res.status(403).json({ error: "This account has been deactivated" });
+  }
+
   req.sellerId = seller.id;
   req.role = seller.role;
+  next();
+}
+
+export function requireAdmin(req: Request, res: Response, next: NextFunction) {
+  if (req.role !== "admin") {
+    return res.status(403).json({ error: "Admin access required" });
+  }
   next();
 }

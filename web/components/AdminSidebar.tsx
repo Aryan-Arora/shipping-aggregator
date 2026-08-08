@@ -1,40 +1,21 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
 const NAV_ITEMS = [
-  { href: "/dashboard", label: "Dashboard" },
-  { href: "/orders", label: "Orders" },
-  { href: "/ship-now", label: "Ship Now" },
-  { href: "/shipments", label: "Shipments" },
-  { href: "/ndr", label: "NDR" },
-  { href: "/cod", label: "COD Reconciliation" },
-  { href: "/pickup-locations", label: "Pickup Locations" },
+  { href: "/admin", label: "Overview" },
+  { href: "/admin/sellers", label: "Sellers" },
+  { href: "/admin/shipments", label: "Shipments" },
+  { href: "/admin/couriers", label: "Couriers" },
+  { href: "/admin/ndr", label: "NDR" },
+  { href: "/admin/cod", label: "COD" },
 ];
 
-export function Sidebar() {
+export function AdminSidebar() {
   const pathname = usePathname();
   const router = useRouter();
-  const [isAdmin, setIsAdmin] = useState(false);
-
-  useEffect(() => {
-    (async () => {
-      const supabase = createClient();
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (!user) return;
-      const { data: seller } = await supabase
-        .from("sellers")
-        .select("role")
-        .eq("auth_user_id", user.id)
-        .single();
-      setIsAdmin(seller?.role === "admin");
-    })();
-  }, []);
 
   async function handleLogout() {
     const supabase = createClient();
@@ -56,6 +37,14 @@ export function Sidebar() {
         <span className="text-[0.95rem] font-semibold tracking-tight" style={{ color: "var(--color-text-primary)" }}>
           Shipping Aggregator
         </span>
+        <div className="mt-1">
+          <span
+            className="badge"
+            style={{ backgroundColor: "var(--color-accent-soft)", color: "var(--color-accent-hover)" }}
+          >
+            Admin
+          </span>
+        </div>
       </div>
       <nav className="flex-1 space-y-0.5 px-3">
         {NAV_ITEMS.map((item) => {
@@ -77,11 +66,9 @@ export function Sidebar() {
         })}
       </nav>
       <div className="border-t px-3 py-3" style={{ borderColor: "var(--color-border)" }}>
-        {isAdmin && (
-          <Link href="/admin" className="btn-ghost mb-1 w-full justify-start px-3">
-            Admin panel
-          </Link>
-        )}
+        <Link href="/dashboard" className="btn-ghost mb-1 w-full justify-start px-3">
+          Back to seller view
+        </Link>
         <button onClick={handleLogout} className="btn-ghost w-full justify-start px-3">
           Log out
         </button>

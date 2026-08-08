@@ -10,6 +10,7 @@ import { webhooksRouter } from "./routes/webhooks";
 import { dashboardRouter } from "./routes/dashboard";
 import { ndrRouter } from "./routes/ndr";
 import { codRouter } from "./routes/cod";
+import { adminRouter } from "./routes/admin";
 
 const app = express();
 
@@ -25,6 +26,7 @@ app.use("/webhooks", webhooksRouter);
 app.use("/dashboard", dashboardRouter);
 app.use("/ndr", ndrRouter);
 app.use("/cod", codRouter);
+app.use("/admin", adminRouter);
 
 const port = process.env.PORT ? Number(process.env.PORT) : 4000;
 app.listen(port, () => {
