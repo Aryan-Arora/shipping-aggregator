@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { DashboardStats } from "@/components/DashboardStats";
 
 export default async function DashboardPage() {
   const supabase = await createClient();
@@ -18,9 +19,9 @@ export default async function DashboardPage() {
         Welcome{seller ? `, ${seller.company_name}` : ""}
       </h1>
       <p className="mt-2 text-[0.9rem] leading-relaxed" style={{ color: "var(--color-text-secondary)" }}>
-        Use the sidebar to add pickup locations, create orders, compare courier rates, and track
-        shipments. Stat cards and volume charts land here once real shipment data exists.
+        Here's how your shipments are moving right now.
       </p>
+      <DashboardStats />
     </div>
   );
 }

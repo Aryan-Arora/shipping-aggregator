@@ -9,6 +9,8 @@ const NAV_ITEMS = [
   { href: "/orders", label: "Orders" },
   { href: "/ship-now", label: "Ship Now" },
   { href: "/shipments", label: "Shipments" },
+  { href: "/ndr", label: "NDR" },
+  { href: "/cod", label: "COD Reconciliation" },
   { href: "/pickup-locations", label: "Pickup Locations" },
 ];
 
