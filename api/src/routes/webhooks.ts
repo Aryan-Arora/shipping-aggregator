@@ -1,15 +1,21 @@
 import { Router } from "express";
 import { supabase } from "../config/supabase";
+import { webhookVerifiers } from "../adapters/support/webhookVerifiers";
 
 export const webhooksRouter = Router();
 
 const NDR_STATUSES = new Set(["ndr", "delivery_failed"]);
 
-// Mock couriers have no real signature to validate; a real adapter would
-// verify a per-courier signature header here before trusting the payload.
 webhooksRouter.post("/:courierCode", async (req, res) => {
   const { courierCode } = req.params;
   const { awb, status, reason } = req.body;
+
+  // Mock couriers have no entry here, so verification is skipped for them.
+  // A real courier's entry gates on it — an unconfigured secret fails closed.
+  const verify = webhookVerifiers[courierCode];
+  if (verify && !verify(req)) {
+    return res.status(401).json({ error: "Invalid webhook signature" });
+  }
 
   if (!awb || !status) {
     return res.status(400).json({ error: "awb and status are required" });
