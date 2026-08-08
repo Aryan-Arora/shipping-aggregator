@@ -1,5 +1,26 @@
 import { supabase } from "../config/supabase";
 
+export class SelfDeactivationError extends Error {
+  constructor() {
+    super("You cannot deactivate your own account");
+    this.name = "SelfDeactivationError";
+  }
+}
+
+// Pulled out of the route handler so it's unit-testable without standing up
+// an Express app — this is the guard against the lockout bug caught live
+// during Tier 10 (an admin deactivating the only account, including their
+// own, locks everyone out until someone fixes it via direct DB access).
+export function assertNotSelfDeactivation(
+  targetSellerId: string,
+  callerSellerId: string,
+  updates: { is_active?: boolean }
+) {
+  if (targetSellerId === callerSellerId && updates.is_active === false) {
+    throw new SelfDeactivationError();
+  }
+}
+
 export async function listSellers() {
   const { data, error } = await supabase
     .from("sellers")

@@ -10,6 +10,8 @@ import {
   listNdrCasesAdmin,
   listCodRemittancesAdmin,
   getPlatformStats,
+  assertNotSelfDeactivation,
+  SelfDeactivationError,
 } from "../services/adminService";
 import { recordRemittance } from "../services/codRemittanceService";
 import { runCodReconciliation } from "../jobs/codReconciliation";
@@ -36,13 +38,14 @@ adminRouter.get("/sellers", async (_req, res) => {
 });
 
 adminRouter.patch("/sellers/:id", async (req, res) => {
-  if (req.params.id === req.sellerId && req.body.is_active === false) {
-    return res.status(400).json({ error: "You cannot deactivate your own account" });
-  }
   try {
     const { company_name, phone, is_active } = req.body;
+    assertNotSelfDeactivation(req.params.id, req.sellerId, { is_active });
     res.json(await updateSeller(req.params.id, { company_name, phone, is_active }));
   } catch (err) {
+    if (err instanceof SelfDeactivationError) {
+      return res.status(400).json({ error: err.message });
+    }
     res.status(400).json({ error: err instanceof Error ? err.message : "Update failed" });
   }
 });

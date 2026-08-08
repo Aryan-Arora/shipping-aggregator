@@ -47,7 +47,16 @@ export default function LoginPage() {
             />
           </div>
           <div>
-            <label className="label">Password</label>
+            <div className="flex items-center justify-between">
+              <label className="label">Password</label>
+              <Link
+                href="/forgot-password"
+                className="mb-1.5 text-[0.8rem] font-medium hover:underline"
+                style={{ color: "var(--color-accent)" }}
+              >
+                Forgot password?
+              </Link>
+            </div>
             <input
               type="password"
               required

@@ -1,6 +1,8 @@
 import "dotenv/config";
 import express from "express";
 import cors from "cors";
+import rateLimit from "express-rate-limit";
+import { logger } from "./logger";
 import { healthRouter } from "./routes/health";
 import { pickupLocationsRouter } from "./routes/pickupLocations";
 import { ordersRouter } from "./routes/orders";
@@ -20,6 +22,28 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+// A generous general limit (the API is only ever called by our own
+// frontend, not the public), plus a tighter one on booking — the operation
+// most worth protecting from being hammered, since each call reaches out to
+// a courier adapter.
+const generalLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 300,
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+const bookingLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  limit: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: "Too many booking attempts — please wait a moment and try again." },
+});
+
+app.use(generalLimiter);
+app.use("/shipments", bookingLimiter);
+
 app.use("/health", healthRouter);
 app.use("/pickup-locations", pickupLocationsRouter);
 app.use("/orders", ordersRouter);
@@ -33,7 +57,7 @@ app.use("/admin", adminRouter);
 
 const port = process.env.PORT ? Number(process.env.PORT) : 4000;
 app.listen(port, () => {
-  console.log(`shipping-aggregator-api listening on port ${port}`);
+  logger.info({ port }, "shipping-aggregator-api listening");
 });
 
 // No real cron infra yet (Tier 15 in docs/business-readiness-roadmap.md) —
@@ -47,16 +71,16 @@ if (process.env.BACKGROUND_JOBS !== "false") {
   const COD_RECONCILIATION_INTERVAL_MS = Number(process.env.COD_RECONCILIATION_INTERVAL_MS ?? 24 * 60 * 60 * 1000);
 
   setInterval(() => {
-    reconcileStaleShipments().catch((err) => console.error("[trackingReconciliation]", err));
+    reconcileStaleShipments().catch((err) => logger.error({ err }, "trackingReconciliation failed"));
   }, TRACKING_INTERVAL_MS);
 
   setInterval(() => {
-    processRetryQueue().catch((err) => console.error("[retryQueue]", err));
+    processRetryQueue().catch((err) => logger.error({ err }, "retryQueue failed"));
   }, RETRY_QUEUE_INTERVAL_MS);
 
   setInterval(() => {
-    runCodReconciliation().catch((err) => console.error("[codReconciliation]", err));
+    runCodReconciliation().catch((err) => logger.error({ err }, "codReconciliation failed"));
   }, COD_RECONCILIATION_INTERVAL_MS);
 
-  console.log("Background jobs scheduled: trackingReconciliation, retryQueue, codReconciliation");
+  logger.info("Background jobs scheduled: trackingReconciliation, retryQueue, codReconciliation");
 }
