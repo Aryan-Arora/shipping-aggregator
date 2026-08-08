@@ -11,6 +11,7 @@ const NAV_ITEMS = [
   { href: "/admin/couriers", label: "Couriers" },
   { href: "/admin/ndr", label: "NDR" },
   { href: "/admin/cod", label: "COD" },
+  { href: "/admin/jobs", label: "Jobs" },
 ];
 
 export function AdminSidebar() {

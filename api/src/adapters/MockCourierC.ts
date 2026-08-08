@@ -1,4 +1,5 @@
 import { CourierAdapter, CreateShipmentInput, CreateShipmentResult, TrackingUpdate } from "./CourierAdapter";
+import { mockTrackingStatus } from "./support/mockProgression";
 
 function pincodeSeed(pincode: string): number {
   return pincode.split("").reduce((sum, ch) => sum + ch.charCodeAt(0) * 7, 0);
@@ -28,7 +29,8 @@ export const MockCourierC: CourierAdapter = {
   },
 
   async trackShipment(awb: string): Promise<TrackingUpdate[]> {
-    return [{ status: "booked", occurredAt: new Date().toISOString(), raw: { awb } }];
+    const { status, occurredAt } = mockTrackingStatus(awb);
+    return [{ status, occurredAt, raw: { awb } }];
   },
 
   async cancelShipment(_awb: string) {

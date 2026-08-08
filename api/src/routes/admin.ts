@@ -1,4 +1,5 @@
 import { Router } from "express";
+import { supabase } from "../config/supabase";
 import { requireAuth, requireAdmin } from "../middleware/auth";
 import {
   listSellers,
@@ -10,6 +11,10 @@ import {
   listCodRemittancesAdmin,
   getPlatformStats,
 } from "../services/adminService";
+import { recordRemittance } from "../services/codRemittanceService";
+import { runCodReconciliation } from "../jobs/codReconciliation";
+import { reconcileStaleShipments } from "../jobs/trackingReconciliation";
+import { processRetryQueue } from "../jobs/retryQueue";
 
 export const adminRouter = Router();
 adminRouter.use(requireAuth, requireAdmin);
@@ -89,5 +94,60 @@ adminRouter.get("/cod", async (_req, res) => {
     res.json(await listCodRemittancesAdmin());
   } catch (err) {
     res.status(500).json({ error: err instanceof Error ? err.message : "Failed to load COD remittances" });
+  }
+});
+
+adminRouter.patch("/cod/remittances/:id", async (req, res) => {
+  try {
+    const { remittedAmount, remittedAt } = req.body;
+    if (typeof remittedAmount !== "number") {
+      return res.status(400).json({ error: "remittedAmount must be a number" });
+    }
+    res.json(await recordRemittance(req.params.id, remittedAmount, remittedAt));
+  } catch (err) {
+    res.status(400).json({ error: err instanceof Error ? err.message : "Failed to record remittance" });
+  }
+});
+
+// --- Background jobs: manual trigger + visibility -------------------------
+// No cron infra yet (see docs/business-readiness-roadmap.md Tier 15), so
+// these run on an in-process interval (src/index.ts) and can also be fired
+// on demand here for testing/ops visibility.
+
+adminRouter.post("/jobs/tracking-reconciliation", async (_req, res) => {
+  try {
+    res.json(await reconcileStaleShipments());
+  } catch (err) {
+    res.status(500).json({ error: err instanceof Error ? err.message : "Job failed" });
+  }
+});
+
+adminRouter.post("/jobs/cod-reconciliation", async (_req, res) => {
+  try {
+    res.json(await runCodReconciliation());
+  } catch (err) {
+    res.status(500).json({ error: err instanceof Error ? err.message : "Job failed" });
+  }
+});
+
+adminRouter.post("/jobs/retry-queue/process", async (_req, res) => {
+  try {
+    res.json(await processRetryQueue());
+  } catch (err) {
+    res.status(500).json({ error: err instanceof Error ? err.message : "Job failed" });
+  }
+});
+
+adminRouter.get("/jobs/retry-queue", async (_req, res) => {
+  try {
+    const { data, error } = await supabase
+      .from("failed_operations")
+      .select("*")
+      .order("created_at", { ascending: false })
+      .limit(100);
+    if (error) throw error;
+    res.json(data ?? []);
+  } catch (err) {
+    res.status(500).json({ error: err instanceof Error ? err.message : "Failed to load retry queue" });
   }
 });
