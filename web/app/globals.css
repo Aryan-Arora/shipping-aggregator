@@ -6,10 +6,10 @@
 :root {
   color-scheme: light;
 
-  /* Brand / accent — swap these when the palette is decided */
-  --color-accent: #2563eb;
-  --color-accent-hover: #1d4ed8;
-  --color-accent-soft: #eff4ff;
+  /* Brand / accent — Shipping Teal */
+  --color-accent: #0d9488;
+  --color-accent-hover: #0f766e;
+  --color-accent-soft: #f0fdfa;
 
   /* Semantic status colors (kept independent of brand accent) */
   --color-success: #1a9147;
