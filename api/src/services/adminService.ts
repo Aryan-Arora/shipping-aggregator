@@ -228,7 +228,9 @@ export async function getPlatformStats() {
     .from("shipments")
     .select("id", { count: "exact", head: true });
 
-  const { data: shipments } = await supabase.from("shipments").select("status, booked_at");
+  const { data: shipments } = await supabase
+    .from("shipments")
+    .select("status, booked_at, price, courier_id, couriers(name)");
 
   const inTransit = (shipments ?? []).filter((s) =>
     ["picked_up", "in_transit"].includes(s.status)
@@ -250,6 +252,48 @@ export async function getPlatformStats() {
     .slice(-14)
     .map(([date, count]) => ({ date, count }));
 
+  const statusByKey = new Map<string, number>();
+  const courierShareByName = new Map<string, number>();
+  for (const s of shipments ?? []) {
+    statusByKey.set(s.status, (statusByKey.get(s.status) ?? 0) + 1);
+    const courier = Array.isArray(s.couriers) ? s.couriers[0] : s.couriers;
+    const courierName = courier?.name ?? "Unassigned";
+    courierShareByName.set(courierName, (courierShareByName.get(courierName) ?? 0) + 1);
+  }
+  const statusBreakdown = Array.from(statusByKey.entries())
+    .sort(([, a], [, b]) => b - a)
+    .map(([status, count]) => ({ status, count }));
+  const courierShare = Array.from(courierShareByName.entries())
+    .sort(([, a], [, b]) => b - a)
+    .map(([courierName, count]) => ({ courierName, count }));
+
+  const { data: orders } = await supabase.from("orders").select("payment_mode, cod_amount");
+  let codCount = 0;
+  let codAmount = 0;
+  let prepaidCount = 0;
+  for (const o of orders ?? []) {
+    if (o.payment_mode === "cod") {
+      codCount += 1;
+      codAmount += Number(o.cod_amount ?? 0);
+    } else {
+      prepaidCount += 1;
+    }
+  }
+  const paymentModeSplit = [
+    { mode: "COD", count: codCount, amount: codAmount },
+    { mode: "Prepaid", count: prepaidCount, amount: 0 },
+  ];
+
+  const { data: ndrCases } = await supabase.from("ndr_cases").select("reason");
+  const reasonByKey = new Map<string, number>();
+  for (const n of ndrCases ?? []) {
+    const reason = n.reason ?? "Unspecified";
+    reasonByKey.set(reason, (reasonByKey.get(reason) ?? 0) + 1);
+  }
+  const ndrReasonBreakdown = Array.from(reasonByKey.entries())
+    .sort(([, a], [, b]) => b - a)
+    .map(([reason, count]) => ({ reason, count }));
+
   return {
     totalSellers: totalSellers ?? 0,
     totalShipments: totalShipments ?? 0,
@@ -257,5 +301,9 @@ export async function getPlatformStats() {
     delivered,
     ndrOpen: ndrOpen ?? 0,
     volumeTrend,
+    statusBreakdown,
+    courierShare,
+    paymentModeSplit,
+    ndrReasonBreakdown,
   };
 }

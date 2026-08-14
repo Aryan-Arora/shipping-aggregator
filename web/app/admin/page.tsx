@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { apiGet } from "@/lib/api";
+import { DonutChart } from "@/components/DonutChart";
+import { BarList } from "@/components/BarList";
 
 interface PlatformStats {
   totalSellers: number;
@@ -10,6 +12,10 @@ interface PlatformStats {
   delivered: number;
   ndrOpen: number;
   volumeTrend: { date: string; count: number }[];
+  statusBreakdown: { status: string; count: number }[];
+  courierShare: { courierName: string; count: number }[];
+  paymentModeSplit: { mode: string; count: number; amount: number }[];
+  ndrReasonBreakdown: { reason: string; count: number }[];
 }
 
 const muted = { color: "var(--color-text-secondary)" };
@@ -102,6 +108,58 @@ export default function AdminOverviewPage() {
               </div>
             )}
           </div>
+
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+            <div className="card p-5">
+              <h2 className="text-[0.8rem] font-semibold uppercase tracking-wide" style={muted}>
+                Shipment status breakdown
+              </h2>
+              <div className="mt-4">
+                <DonutChart
+                  data={stats.statusBreakdown.map((s) => ({ label: s.status, value: s.count }))}
+                />
+              </div>
+            </div>
+
+            <div className="card p-5">
+              <h2 className="text-[0.8rem] font-semibold uppercase tracking-wide" style={muted}>
+                Courier-wise share
+              </h2>
+              <div className="mt-4">
+                <DonutChart
+                  data={stats.courierShare.map((c) => ({ label: c.courierName, value: c.count }))}
+                />
+              </div>
+            </div>
+
+            <div className="card p-5">
+              <h2 className="text-[0.8rem] font-semibold uppercase tracking-wide" style={muted}>
+                Payment mode split
+              </h2>
+              <div className="mt-4">
+                <DonutChart
+                  data={stats.paymentModeSplit.map((p) => ({ label: p.mode, value: p.count }))}
+                />
+              </div>
+              {stats.paymentModeSplit.some((p) => p.mode === "COD") && (
+                <p className="mt-3 text-[0.75rem]" style={muted}>
+                  Total COD value: ₹
+                  {stats.paymentModeSplit.find((p) => p.mode === "COD")?.amount.toFixed(0) ?? 0}
+                </p>
+              )}
+            </div>
+          </div>
+
+          {stats.ndrReasonBreakdown.length > 0 && (
+            <div className="card p-5">
+              <h2 className="text-[0.8rem] font-semibold uppercase tracking-wide" style={muted}>
+                NDR reasons
+              </h2>
+              <div className="mt-4">
+                <BarList data={stats.ndrReasonBreakdown.map((n) => ({ label: n.reason, value: n.count }))} />
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>
