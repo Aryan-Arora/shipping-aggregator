@@ -107,10 +107,11 @@ export function DashboardStats() {
                   </div>
                   <div className="h-2 w-full rounded-full" style={{ backgroundColor: "var(--color-bg)" }}>
                     <div
-                      className="h-2 rounded-full transition-all duration-300"
+                      className="h-2 rounded-full"
                       style={{
                         width: `${(c.count / maxVolume) * 100}%`,
                         backgroundColor: "var(--color-accent)",
+                        transition: "width var(--duration-slow) var(--ease-spring)",
                       }}
                     />
                   </div>
@@ -134,7 +135,8 @@ export function DashboardStats() {
                 <Link
                   key={s.id}
                   href={`/shipments/${s.id}`}
-                  className="flex items-center justify-between rounded-[var(--radius-sm)] px-2 py-2 text-[0.8rem] transition-colors duration-150 hover:bg-[var(--color-bg)]"
+                  className="flex items-center justify-between rounded-[var(--radius-sm)] px-2 py-2 text-[0.8rem] hover:bg-[var(--color-bg)]"
+                  style={{ transition: "background-color var(--duration-fast) var(--ease-spring)" }}
                 >
                   <div>
                     <p style={primary}>{s.orderRef}</p>

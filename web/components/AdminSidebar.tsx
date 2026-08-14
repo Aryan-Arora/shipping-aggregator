@@ -27,11 +27,10 @@ export function AdminSidebar() {
 
   return (
     <aside
-      className="sticky top-0 flex h-screen w-60 shrink-0 flex-col border-r"
+      className="material-chrome sticky top-0 flex h-screen w-60 shrink-0 flex-col border-r"
       style={{
-        backgroundColor: "rgba(255, 255, 255, 0.72)",
-        backdropFilter: "blur(20px) saturate(180%)",
         borderColor: "var(--color-border)",
+        boxShadow: "1px 0 0 var(--material-chrome-edge)",
       }}
     >
       <div className="px-5 py-5">
@@ -54,12 +53,13 @@ export function AdminSidebar() {
             <Link
               key={item.href}
               href={item.href}
-              className="block rounded-[var(--radius-sm)] px-3 py-2 text-[0.875rem] font-medium transition-all duration-150 active:scale-[0.98]"
-              style={
-                active
+              className="block rounded-[var(--radius-sm)] px-3 py-2 text-[0.875rem] font-medium active:scale-[0.98]"
+              style={{
+                transition: "background-color var(--duration-fast) var(--ease-spring), color var(--duration-fast) var(--ease-spring), transform 100ms var(--ease-spring)",
+                ...(active
                   ? { backgroundColor: "var(--color-accent-soft)", color: "var(--color-accent-hover)" }
-                  : { color: "var(--color-text-secondary)" }
-              }
+                  : { color: "var(--color-text-secondary)" }),
+              }}
             >
               {item.label}
             </Link>

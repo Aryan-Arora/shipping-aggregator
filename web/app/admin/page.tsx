@@ -86,11 +86,12 @@ export default function AdminOverviewPage() {
                 {stats.volumeTrend.map((v) => (
                   <div key={v.date} className="flex flex-1 flex-col items-center gap-1">
                     <div
-                      className="w-full rounded-t-[4px] transition-all duration-300"
+                      className="w-full rounded-t-[4px]"
                       style={{
                         height: `${(v.count / maxVolume) * 100}%`,
                         minHeight: "2px",
                         backgroundColor: "var(--color-accent)",
+                        transition: "height var(--duration-slow) var(--ease-spring)",
                       }}
                     />
                     <span className="text-[0.65rem]" style={{ color: "var(--color-text-tertiary)" }}>
