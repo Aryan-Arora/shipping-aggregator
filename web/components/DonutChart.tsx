@@ -36,7 +36,7 @@ export function DonutChart({ data, size = 160 }: { data: DonutDatum[]; size?: nu
   });
 
   return (
-    <div className="flex items-center gap-5">
+    <div className="flex flex-wrap items-center gap-4">
       <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="shrink-0">
         <g transform={`rotate(-90 ${radius} ${radius})`}>
           {total === 0 ? (
@@ -75,7 +75,7 @@ export function DonutChart({ data, size = 160 }: { data: DonutDatum[]; size?: nu
           {total}
         </text>
       </svg>
-      <div className="min-w-0 flex-1 space-y-1.5">
+      <div className="min-w-[130px] flex-1 space-y-1.5">
         {data.map((d, i) => (
           <div key={d.label} className="flex items-center justify-between gap-3 text-[0.8rem]">
             <span className="flex min-w-0 items-center gap-2" style={{ color: "var(--color-text-secondary)" }}>

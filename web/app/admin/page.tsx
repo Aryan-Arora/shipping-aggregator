@@ -70,8 +70,8 @@ export default function AdminOverviewPage() {
           Loading...
         </p>
       ) : (
-        <div className="mt-6 space-y-6">
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
+        <div className="mt-6 space-y-4">
+          <div className="grid grid-cols-3 gap-4 md:grid-cols-5">
             <StatCard label="Total Sellers" value={stats.totalSellers} />
             <StatCard label="Total Shipments" value={stats.totalShipments} />
             <StatCard label="In Transit" value={stats.inTransit} accent="var(--color-accent)" />
@@ -79,87 +79,92 @@ export default function AdminOverviewPage() {
             <StatCard label="Open NDR" value={stats.ndrOpen} accent="var(--color-warning)" />
           </div>
 
-          <div className="card p-5">
-            <h2 className="text-[0.8rem] font-semibold uppercase tracking-wide" style={muted}>
-              Shipment volume (last 14 days)
-            </h2>
-            {stats.volumeTrend.length === 0 ? (
-              <p className="mt-4 text-[0.85rem]" style={muted}>
-                No shipments yet.
-              </p>
-            ) : (
-              <div className="mt-4 flex items-end gap-2" style={{ height: "120px" }}>
-                {stats.volumeTrend.map((v) => (
-                  <div key={v.date} className="flex flex-1 flex-col items-center gap-1">
-                    <div
-                      className="w-full rounded-t-[4px]"
-                      style={{
-                        height: `${(v.count / maxVolume) * 100}%`,
-                        minHeight: "2px",
-                        backgroundColor: "var(--color-accent)",
-                        transition: "height var(--duration-slow) var(--ease-spring)",
-                      }}
-                    />
-                    <span className="text-[0.65rem]" style={{ color: "var(--color-text-tertiary)" }}>
-                      {v.date.slice(5)}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-            <div className="card p-5">
-              <h2 className="text-[0.8rem] font-semibold uppercase tracking-wide" style={muted}>
-                Shipment status breakdown
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+            <div className="card p-4 md:col-span-2">
+              <h2 className="text-[0.75rem] font-semibold uppercase tracking-wide" style={muted}>
+                Shipment volume (last 14 days)
               </h2>
-              <div className="mt-4">
+              {stats.volumeTrend.length === 0 ? (
+                <p className="mt-4 text-[0.85rem]" style={muted}>
+                  No shipments yet.
+                </p>
+              ) : (
+                <div className="mt-3 flex items-end gap-2" style={{ height: "90px" }}>
+                  {stats.volumeTrend.map((v) => (
+                    <div key={v.date} className="flex flex-1 flex-col items-center gap-1">
+                      <div
+                        className="w-full rounded-t-[4px]"
+                        style={{
+                          height: `${(v.count / maxVolume) * 100}%`,
+                          minHeight: "2px",
+                          backgroundColor: "var(--color-accent)",
+                          transition: "height var(--duration-slow) var(--ease-spring)",
+                        }}
+                      />
+                      <span className="text-[0.6rem]" style={{ color: "var(--color-text-tertiary)" }}>
+                        {v.date.slice(5)}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="card p-4">
+              <h2 className="text-[0.75rem] font-semibold uppercase tracking-wide" style={muted}>
+                Shipment status
+              </h2>
+              <div className="mt-3">
                 <DonutChart
+                  size={120}
                   data={stats.statusBreakdown.map((s) => ({ label: s.status, value: s.count }))}
                 />
               </div>
             </div>
+          </div>
 
-            <div className="card p-5">
-              <h2 className="text-[0.8rem] font-semibold uppercase tracking-wide" style={muted}>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+            <div className="card p-4">
+              <h2 className="text-[0.75rem] font-semibold uppercase tracking-wide" style={muted}>
                 Courier-wise share
               </h2>
-              <div className="mt-4">
+              <div className="mt-3">
                 <DonutChart
+                  size={120}
                   data={stats.courierShare.map((c) => ({ label: c.courierName, value: c.count }))}
                 />
               </div>
             </div>
 
-            <div className="card p-5">
-              <h2 className="text-[0.8rem] font-semibold uppercase tracking-wide" style={muted}>
+            <div className="card p-4">
+              <h2 className="text-[0.75rem] font-semibold uppercase tracking-wide" style={muted}>
                 Payment mode split
               </h2>
-              <div className="mt-4">
+              <div className="mt-3">
                 <DonutChart
+                  size={120}
                   data={stats.paymentModeSplit.map((p) => ({ label: p.mode, value: p.count }))}
                 />
               </div>
               {stats.paymentModeSplit.some((p) => p.mode === "COD") && (
-                <p className="mt-3 text-[0.75rem]" style={muted}>
+                <p className="mt-3 text-[0.7rem]" style={muted}>
                   Total COD value: ₹
                   {stats.paymentModeSplit.find((p) => p.mode === "COD")?.amount.toFixed(0) ?? 0}
                 </p>
               )}
             </div>
-          </div>
 
-          {stats.ndrReasonBreakdown.length > 0 && (
-            <div className="card p-5">
-              <h2 className="text-[0.8rem] font-semibold uppercase tracking-wide" style={muted}>
-                NDR reasons
-              </h2>
-              <div className="mt-4">
-                <BarList data={stats.ndrReasonBreakdown.map((n) => ({ label: n.reason, value: n.count }))} />
+            {stats.ndrReasonBreakdown.length > 0 && (
+              <div className="card p-4">
+                <h2 className="text-[0.75rem] font-semibold uppercase tracking-wide" style={muted}>
+                  NDR reasons
+                </h2>
+                <div className="mt-3">
+                  <BarList data={stats.ndrReasonBreakdown.map((n) => ({ label: n.reason, value: n.count }))} />
+                </div>
               </div>
-            </div>
-          )}
+            )}
+          </div>
         </div>
       )}
     </div>
